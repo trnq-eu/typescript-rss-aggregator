@@ -2,7 +2,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
-const CONFIG_FILE_NAME = ".gatorconfig.json";
+const CONFIG_FILE_NAME = "./.gatorconfig.json";
 
 // Represents the structure of the config file in camelCase
 
