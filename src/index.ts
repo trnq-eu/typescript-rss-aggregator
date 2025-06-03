@@ -1,6 +1,6 @@
 // This would typically be in your main application file (e.g., main.ts or index.ts)
 import { readConfig, setUser } from './config'; // Adjust path if necessary
-import { createUser, getUser, deleteAllUsers } from './lib/db/queries/users';
+import { createUser, getUser, getUsers, deleteAllUsers } from './lib/db/queries/users';
 
 type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 type CommandsRegistry = Record<string, CommandHandler>;
@@ -40,6 +40,27 @@ async function handlerReset(cmdName: string, ...args: string[]): Promise<void> {
         process.exit(1);
     }
     
+}
+
+async function handlerUsers(cmdName: string, ...args: string[]): Promise<void> {
+    try {
+        const usersList = await getUsers();
+        const actualConfig = await readConfig();
+        const currentUser = actualConfig.currentUserName
+
+        for (let user of usersList) {
+            if (user.name === currentUser) {
+                console.log(`* ${user.name} (current)`)
+            } else {
+                console.log(`* ${user.name}`);
+            }
+            
+        }
+        // console.log(actualConfig)
+    } catch (error: any) {
+        throw new Error(`Failed to get users: ${error.message}`);
+        process.exit(1);
+    }
 }
 
 
@@ -86,7 +107,6 @@ async function runCommand(
         }
         // Call the handler with its arguments
         await handler(cmdName, ...args);
-    
     }
 
 async function main() {
@@ -97,6 +117,7 @@ async function main() {
     await registerCommand(commands, "login", handlerLogin);
     await registerCommand(commands, "register", handlerRegister);
     await registerCommand(commands, "reset", handlerReset);
+    await registerCommand(commands, "users", handlerUsers);
 
     // Get command-line arguments
     const args = process.argv.slice(2); // Remove node path and script path
@@ -111,7 +132,7 @@ async function main() {
     const cmdArgs = args.slice(1); // Rest of the arguments for the command
 
     try {
-        console.log(`Attempting to run command: '${cmdName}' with arguments: [${cmdArgs.join(', ')}]`);
+        // console.log(`Attempting to run command: '${cmdName}' with arguments: [${cmdArgs.join(', ')}]`);
         await runCommand(commands, cmdName, ...cmdArgs); 
 } catch (error: any) {
         console.error("\n--- Command Execution Failed ---");
