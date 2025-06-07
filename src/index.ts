@@ -1,9 +1,28 @@
 // This would typically be in your main application file (e.g., main.ts or index.ts)
 import { readConfig, setUser } from './config'; // Adjust path if necessary
 import { createUser, getUser, getUsers, deleteAllUsers } from './lib/db/queries/users';
+import { fetchFeed, RSSFeed } from './lib/db/rss'; // Import RSS related functions and types
+
+
 
 type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 type CommandsRegistry = Record<string, CommandHandler>;
+
+async function handlerAgg(cmdName: string, ...args: string[]): Promise<void> {
+    // For now, use a fixed URL as per assignment.
+    // Later, this might take a URL or feed name as an argument.
+    const feedURL = "https://www.wagslane.dev/index.xml";
+    console.log(`Fetching feed from ${feedURL}...`);
+
+    try {
+        const feedData: RSSFeed = await fetchFeed(feedURL);
+        console.log("Feed data received (entire object):");
+        console.log(JSON.stringify(feedData, null, 2)); // Pretty print the object
+    } catch (error: any) {
+        // Re-throw to be caught by the main error handler, adding context
+        throw new Error(`Error in 'agg' command while fetching from ${feedURL}: ${error.message}`);
+    }
+}
 
 async function handlerRegister(cmdName: string, ...args: string[]): Promise<void> {
     if (args.length === 0) {
@@ -118,6 +137,8 @@ async function main() {
     await registerCommand(commands, "register", handlerRegister);
     await registerCommand(commands, "reset", handlerReset);
     await registerCommand(commands, "users", handlerUsers);
+    await registerCommand(commands, "agg", handlerAgg); // Register the new agg command
+
 
     // Get command-line arguments
     const args = process.argv.slice(2); // Remove node path and script path
